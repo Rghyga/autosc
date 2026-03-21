@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+panel_header "VLESS MENU"
+panel_row "Domain" "$DOMAIN"
+panel_row "TLS Port" "$XRAY_TLS_PORT"
+panel_row "NTLS Port" "$XRAY_NTLS_PORT"
+panel_row "gRPC Port" "$XRAY_GRPC_PORT"
+ui_mid
+menu_item "[1] Add VLESS"
+menu_item "[2] Renew VLESS"
+menu_item "[3] Delete VLESS"
+menu_item "[4] List VLESS"
+menu_item "[0] Back"
+panel_footer
+read -rp "Select menu: " opt
+case "$opt" in
+  1) exec xray-add vless menu-vless ;;
+  2) exec xray-renew vless menu-vless ;;
+  3) exec xray-delete vless menu-vless ;;
+  4) exec xray-list vless menu-vless ;;
+  *) exec menu-xray ;;
+esac

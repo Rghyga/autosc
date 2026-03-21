@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+proto="${1:-}"
+return_menu="${2:-menu-xray}"
+[[ "$proto" =~ ^(vmess|vless|trojan)$ ]] || { echo "Usage: xray-add <vmess|vless|trojan> [return-menu]"; exit 1; }
+
+clear_screen
+ui_top
+ui_row "ADD ${proto^^} ACCOUNT"
+ui_mid
+read -rp "Username        : " user
+read -rp "Password/UUID   : " uuid
+read -rp "Expired (days)  : " days
+read -rp "Limit IP        : " iplimit
+read -rp "Quota (GB)      : " quota
+ui_bottom
+
+[[ "$user" =~ ^[a-zA-Z0-9_]+$ ]] || { echo "Username invalid"; exit 1; }
+username_exists "$proto" "$user" && { echo "Username already exists"; exit 1; }
+[[ "$days" =~ ^[0-9]+$ && "$iplimit" =~ ^[0-9]+$ && "$quota" =~ ^[0-9]+$ ]] || { echo "Input angka tidak valid"; exit 1; }
+[ -n "$uuid" ] || uuid="$(xray uuid)"
+exp="$(date -d "+${days} days" +%Y-%m-%d)"
+python3 /etc/katsu-xray/lib/xray_db.py add "$proto" "$user" "$uuid" "$exp"
+save_account_meta "$proto" "$user" "$uuid" "$exp" "$iplimit" "$quota"
+mapfile -t links < <(build_links "$proto" "$user" "$uuid")
+write_openclash_file "$proto" "$user" "$uuid" "${links[0]}" "${links[1]}" "${links[2]}"
+xray -test -config /etc/xray/config.json >/dev/null
+systemctl restart xray
+clear_screen
+render_account_box "$proto" "$user" "$uuid" "$exp" "$iplimit" "$quota" "${links[0]}" "${links[1]}" "${links[2]}"
+pause
+exec "$return_menu"

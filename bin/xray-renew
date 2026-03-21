@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+proto="${1:-}"
+return_menu="${2:-menu-xray}"
+[[ "$proto" =~ ^(vmess|vless|trojan)$ ]] || { echo "Usage: xray-renew <vmess|vless|trojan> [return-menu]"; exit 1; }
+
+clear_screen
+ui_top
+ui_row "RENEW ${proto^^} ACCOUNT"
+ui_mid
+read -rp "Username     : " user
+read -rp "Extend days  : " days
+ui_bottom
+
+[[ "$days" =~ ^[0-9]+$ ]] || { echo "Extend days wajib angka"; exit 1; }
+meta="$BASE_DIR/accounts/$proto/$user.json"
+[ -f "$meta" ] || { echo "Account not found"; exit 1; }
+old_exp="$(jq -r '.expired' "$meta")"
+new_exp="$(date -d "$old_exp +${days} days" +%Y-%m-%d)"
+uuid="$(jq -r '.uuid' "$meta")"
+iplimit="$(jq -r '.ip_limit' "$meta")"
+quota="$(jq -r '.quota_gb' "$meta")"
+python3 /etc/katsu-xray/lib/xray_db.py add "$proto" "$user" "$uuid" "$new_exp"
+save_account_meta "$proto" "$user" "$uuid" "$new_exp" "$iplimit" "$quota"
+mapfile -t links < <(build_links "$proto" "$user" "$uuid")
+write_openclash_file "$proto" "$user" "$uuid" "${links[0]}" "${links[1]}" "${links[2]}"
+xray -test -config /etc/xray/config.json >/dev/null
+systemctl restart xray
+clear_screen
+ui_top
+ui_row "ACCOUNT RENEWED"
+ui_mid
+ui_kv "Username" "$user"
+ui_kv "Protocol" "$proto"
+ui_kv "Old Expired" "$old_exp"
+ui_kv "New Expired" "$new_exp"
+ui_bottom
+pause
+exec "$return_menu"

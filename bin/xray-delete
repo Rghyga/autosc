@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+proto="${1:-}"
+return_menu="${2:-menu-xray}"
+[[ "$proto" =~ ^(vmess|vless|trojan)$ ]] || { echo "Usage: xray-delete <vmess|vless|trojan> [return-menu]"; exit 1; }
+
+clear_screen
+ui_top
+ui_row "DELETE ${proto^^} ACCOUNT"
+ui_mid
+read -rp "Username : " user
+ui_bottom
+
+meta="$BASE_DIR/accounts/$proto/$user.json"
+[ -f "$meta" ] || { echo "Account not found"; exit 1; }
+python3 /etc/katsu-xray/lib/xray_db.py del "$proto" "$user"
+remove_account_meta "$proto" "$user"
+xray -test -config /etc/xray/config.json >/dev/null
+systemctl restart xray
+clear_screen
+ui_top
+ui_row "ACCOUNT DELETED"
+ui_mid
+ui_kv "Username" "$user"
+ui_kv "Protocol" "$proto"
+ui_kv "Status" "Removed successfully"
+ui_bottom
+pause
+exec "$return_menu"

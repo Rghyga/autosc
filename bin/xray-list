@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+proto="${1:-all}"
+return_menu="${2:-menu-xray}"
+[ "$proto" = "all" ] && protos="vmess vless trojan" || protos="$proto"
+panel_header "XRAY ACCOUNT LIST"
+for p in $protos; do
+  ui_row "${p^^}"
+  files=$(find "$BASE_DIR/accounts/$p" -type f 2>/dev/null | sort || true)
+  if [ -z "$files" ]; then
+    ui_row "No account"
+  else
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      user=$(jq -r '.username' "$file")
+      exp=$(jq -r '.expired' "$file")
+      iplimit=$(jq -r '.ip_limit' "$file")
+      quota=$(jq -r '.quota_gb' "$file")
+      printf "${cyan}|${nc} %-18s %-12s IP:%-4s Quota:%-6s ${cyan}|${nc}\n" "$user" "$exp" "$iplimit" "${quota}GB"
+    done <<< "$files"
+  fi
+  ui_mid
+done
+panel_footer
+pause
+exec "$return_menu"

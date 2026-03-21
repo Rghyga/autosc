@@ -1,0 +1,12 @@
+[Unit]
+Description=KatsuDev Xray Quota Placeholder Service
+After=network.target xray.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'while true; do sleep 300; done'
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

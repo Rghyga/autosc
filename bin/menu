@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+panel_header "KATSUDEV XRAY PANEL"
+panel_row "Domain" "$DOMAIN"
+panel_row "Public IP" "$(server_ip)"
+panel_row "Location" "$(country_name)"
+panel_row "ISP" "$(isp_name)"
+panel_row "Xray Service" "$(systemctl is-active xray 2>/dev/null || echo unknown)"
+panel_row "Nginx Service" "$(systemctl is-active nginx 2>/dev/null || echo unknown)"
+panel_row "SSL Mode" "$ACME_MODE"
+panel_row "VMess Accounts" "$(find /etc/katsu-xray/accounts/vmess -type f 2>/dev/null | wc -l)"
+panel_row "VLESS Accounts" "$(find /etc/katsu-xray/accounts/vless -type f 2>/dev/null | wc -l)"
+panel_row "Trojan Accounts" "$(find /etc/katsu-xray/accounts/trojan -type f 2>/dev/null | wc -l)"
+ui_mid
+menu_item "[1] Xray Menu"
+menu_item "[2] Restart Services"
+menu_item "[3] Server Info"
+menu_item "[0] Exit"
+panel_footer
+read -rp "Select menu: " opt
+case "$opt" in
+  1) exec menu-xray ;;
+  2) systemctl restart xray nginx && echo "Services restarted" && pause && exec menu ;;
+  3)
+    panel_header "SERVER INFO"
+    panel_row "Domain" "$DOMAIN"
+    panel_row "TLS" "$XRAY_TLS_PORT"
+    panel_row "NTLS" "$XRAY_NTLS_PORT"
+    panel_row "gRPC" "$XRAY_GRPC_PORT"
+    panel_row "OpenClash" "$OPENCLASH_PORT"
+    panel_footer
+    pause
+    exec menu ;;
+  *) exit 0 ;;
+esac

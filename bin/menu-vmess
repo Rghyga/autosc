@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+panel_header "VMESS MENU"
+panel_row "Domain" "$DOMAIN"
+panel_row "TLS Port" "$XRAY_TLS_PORT"
+panel_row "NTLS Port" "$XRAY_NTLS_PORT"
+panel_row "gRPC Port" "$XRAY_GRPC_PORT"
+ui_mid
+menu_item "[1] Add VMESS"
+menu_item "[2] Renew VMESS"
+menu_item "[3] Delete VMESS"
+menu_item "[4] List VMESS"
+menu_item "[0] Back"
+panel_footer
+read -rp "Select menu: " opt
+case "$opt" in
+  1) exec xray-add vmess menu-vmess ;;
+  2) exec xray-renew vmess menu-vmess ;;
+  3) exec xray-delete vmess menu-vmess ;;
+  4) exec xray-list vmess menu-vmess ;;
+  *) exec menu-xray ;;
+esac

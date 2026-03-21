@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+panel_header "XRAY PROTOCOL MENU"
+menu_item "[1] VMess Menu"
+menu_item "[2] VLESS Menu"
+menu_item "[3] Trojan Menu"
+menu_item "[4] List All Accounts"
+menu_item "[5] Raw Xray Status"
+menu_item "[0] Back"
+panel_footer
+read -rp "Select menu: " opt
+case "$opt" in
+  1) exec menu-vmess ;;
+  2) exec menu-vless ;;
+  3) exec menu-trojan ;;
+  4) exec xray-list all menu-xray ;;
+  5) systemctl status xray --no-pager; pause; exec menu-xray ;;
+  *) exec menu ;;
+esac

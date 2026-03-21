@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+source /etc/katsu-xray/lib/common.sh
+need_root; load_env; ensure_deps
+panel_header "TROJAN MENU"
+panel_row "Domain" "$DOMAIN"
+panel_row "TLS Port" "$XRAY_TLS_PORT"
+panel_row "NTLS Port" "$XRAY_NTLS_PORT"
+panel_row "gRPC Port" "$XRAY_GRPC_PORT"
+ui_mid
+menu_item "[1] Add TROJAN"
+menu_item "[2] Renew TROJAN"
+menu_item "[3] Delete TROJAN"
+menu_item "[4] List TROJAN"
+menu_item "[0] Back"
+panel_footer
+read -rp "Select menu: " opt
+case "$opt" in
+  1) exec xray-add trojan menu-trojan ;;
+  2) exec xray-renew trojan menu-trojan ;;
+  3) exec xray-delete trojan menu-trojan ;;
+  4) exec xray-list trojan menu-trojan ;;
+  *) exec menu-xray ;;
+esac
